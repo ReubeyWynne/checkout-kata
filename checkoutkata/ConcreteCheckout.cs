@@ -1,33 +1,27 @@
 ﻿namespace checkoutkata;
 
-public class ConcreteCheckout(IProductRepo ProductRepo) : ICheckout
+public class ConcreteCheckout(IProductRepo _productRepo, IPromotionRepo _promotionRepo) : ICheckout
 {
-    
+
     public Dictionary<Product, int> _basket = [];
     public int GetTotalPrice()
     {
         var total = 0;
         foreach (var lineItem in _basket)
         {
-            var product = lineItem.Key; 
-            if (product.Promotion == null || lineItem.Value < product.Promotion.Quantity)
-            {
-                total += product.UnitPrice * lineItem.Value;
-                continue;
-            }
-            var promotion = product.Promotion;
-            var quantity = lineItem.Value;
-            var price = promotion.Price;
-            var numberOfPromotions = quantity / promotion.Quantity;
-            var remainder = quantity % promotion.Quantity;
-            total += numberOfPromotions * price + remainder * product.UnitPrice;
+            var product = lineItem.Key;
+            var promo = _promotionRepo.GetPromotionBySku(product.Sku);
+
+            total += (promo != null)
+                ? promo.GetLineItemTotal(lineItem.Value, product.UnitPrice)
+                : product.UnitPrice * lineItem.Value;
         }
         return total;
     }
 
     public void Scan(string sku)
     {
-        var product = ProductRepo.GetProductBySku(sku) ?? throw new ConcreteCheckoutScanInvalidProductException("Product not found");
+        var product = _productRepo.GetProductBySku(sku) ?? throw new ConcreteCheckoutScanInvalidProductException("Product not found");
         if (!_basket.ContainsKey(product)) _basket[product] = 0;
         _basket[product] += 1;
     }
