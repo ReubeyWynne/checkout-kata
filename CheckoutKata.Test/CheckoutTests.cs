@@ -1,17 +1,27 @@
 namespace CheckoutKata.Test;
 
 using checkoutkata;
+using NSubstitute;
 
-public class UnitTest1
+public class CheckoutTests
 {
+    private ICheckout _checkout;
+    public CheckoutTests()
+    {
+        // Arrange
+        var productRepo = Substitute.For<IProductRepo>();
+        productRepo.GetProductBySku("A").Returns(new Product { Sku = "A", UnitPrice = 50, Promotion = new Promotion { Quantity = 3, Price = 130 } });
+        productRepo.GetProductBySku("B").Returns(new Product { Sku = "B", UnitPrice = 30, Promotion = new Promotion { Quantity = 2, Price = 45 } });
+        productRepo.GetProductBySku("C").Returns(new Product { Sku = "C", UnitPrice = 20 });
+        productRepo.GetProductBySku("D").Returns(new Product { Sku = "D", UnitPrice = 15 });
+        _checkout = new ConcreteCheckout(productRepo);
+    }
     [Fact]
     public void Checkout_GetTotalPrice_NoItems_ReturnsZero()
     {
-        // Arrange
-        var checkout = new ConcreteCheckout();
 
         // Act
-        var result = checkout.GetTotalPrice();
+        var result = _checkout.GetTotalPrice();
 
         // Assert
         Assert.Equal(0, result);
@@ -23,13 +33,11 @@ public class UnitTest1
     [InlineData("C", 20)]
     [InlineData("D", 15)]
     public void Checkout_GetTotalPrice_OneItem_ReturnsCorrectPrice(string item, int expectedPrice)
-    {
-        // Arrange
-        var checkout = new ConcreteCheckout();
+    {;
 
         // Act
-        checkout.Scan(item);
-        var result = checkout.GetTotalPrice();
+        _checkout.Scan(item);
+        var result = _checkout.GetTotalPrice();
 
         // Assert
         Assert.Equal(expectedPrice, result);
@@ -41,15 +49,13 @@ public class UnitTest1
     [InlineData((string[])(["A", "B", "C", "D"]), 115)]
     public void Checkout_GetTotalPrice_MultipleItems_ReturnsCorrectPrice(string[] items, int expectedPrice)
     {
-        // Arrange
-        var checkout = new ConcreteCheckout();
 
         // Act
         foreach (var item in items)
         {
-            checkout.Scan(item);
+            _checkout.Scan(item);
         }
-        var result = checkout.GetTotalPrice();
+        var result = _checkout.GetTotalPrice();
 
         // Assert
         Assert.Equal(expectedPrice, result);
@@ -59,16 +65,14 @@ public class UnitTest1
     [InlineData((string[])(["A", "A", "A"]), 130)]
     [InlineData((string[])(["B", "B"]), 45)]
     public void Checkout_GetTotalPrice_MinimalPromotions_ReturnsCorrectPrice(string[] items, int expectedPrice)
-    {
-        // Arrange
-        var checkout = new ConcreteCheckout();
+    {;
 
         // Act
         foreach (var item in items)
         {
-            checkout.Scan(item);
+            _checkout.Scan(item);
         }
-        var result = checkout.GetTotalPrice();
+        var result = _checkout.GetTotalPrice();
 
         // Assert
         Assert.Equal(expectedPrice, result);
@@ -78,16 +82,14 @@ public class UnitTest1
     [InlineData((string[])(["A", "A", "A", "A"]), 180)]
     [InlineData((string[])(["B", "B", "B"]), 75)]
     public void Checkout_GetTotalPrice_MinimalPromotionPlusOne_ReturnsCorrectPrice(string[] items, int expectedPrice)
-    {
-        // Arrange
-        var checkout = new ConcreteCheckout();
+    {;
 
         // Act
         foreach (var item in items)
         {
-            checkout.Scan(item);
+            _checkout.Scan(item);
         }
-        var result = checkout.GetTotalPrice();
+        var result = _checkout.GetTotalPrice();
 
         // Assert
         Assert.Equal(expectedPrice, result);
@@ -97,16 +99,14 @@ public class UnitTest1
     [InlineData((string[])(["A", "A", "A", "B", "B", "C"]), 195)]
     [InlineData((string[])(["A", "A", "A", "B", "B", "C", "D"]), 210)]
     public void Checkout_GetTotalPrice_MultiplePromotionsWithOtherItems_ReturnsCorrectPrice(string[] items, int expectedPrice)
-    {
-        // Arrange
-        var checkout = new ConcreteCheckout();
+    {;
 
         // Act
         foreach (var item in items)
         {
-            checkout.Scan(item);
+            _checkout.Scan(item);
         }
-        var result = checkout.GetTotalPrice();
+        var result = _checkout.GetTotalPrice();
 
         // Assert
         Assert.Equal(expectedPrice, result);

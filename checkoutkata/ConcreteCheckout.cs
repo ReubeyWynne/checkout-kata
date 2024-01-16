@@ -1,21 +1,15 @@
 ﻿namespace checkoutkata;
 
-public class ConcreteCheckout : ICheckout
+public class ConcreteCheckout(IProductRepo ProductRepo) : ICheckout
 {
-    private readonly Dictionary<string, Product> _products = new()
-    {
-        ["A"] = new Product { Sku = "A", UnitPrice = 50, Promotion = new Promotion { Quantity = 3, Price = 130 } },
-        ["B"] = new Product { Sku = "B", UnitPrice = 30, Promotion = new Promotion { Quantity = 2, Price = 45 } },
-        ["C"] = new Product { Sku = "C", UnitPrice = 20 },
-        ["D"] = new Product { Sku = "D", UnitPrice = 15 },
-    };
-    public Dictionary<string, int> _basket = [];
+    
+    public Dictionary<Product, int> _basket = [];
     public int GetTotalPrice()
     {
         var total = 0;
         foreach (var lineItem in _basket)
         {
-            var product = _products[lineItem.Key];
+            var product = lineItem.Key; 
             if (product.Promotion == null || lineItem.Value < product.Promotion.Quantity)
             {
                 total += product.UnitPrice * lineItem.Value;
@@ -33,8 +27,15 @@ public class ConcreteCheckout : ICheckout
 
     public void Scan(string sku)
     {
-        if (!_products.ContainsKey(sku)) throw new ArgumentException("Invalid SKU");
-        if (!_basket.ContainsKey(sku)) _basket[sku] = 0;
-        _basket[sku] += 1;
+        var product = ProductRepo.GetProductBySku(sku) ?? throw new ConcreteCheckoutScanInvalidProductException("Product not found");
+        if (!_basket.ContainsKey(product)) _basket[product] = 0;
+        _basket[product] += 1;
+    }
+}
+
+public class ConcreteCheckoutScanInvalidProductException : Exception
+{
+    public ConcreteCheckoutScanInvalidProductException(string message) : base(message)
+    {
     }
 }
